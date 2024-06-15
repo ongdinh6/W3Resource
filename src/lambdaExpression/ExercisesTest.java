@@ -3,13 +3,11 @@ package lambdaExpression;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -201,7 +199,6 @@ class ExercisesTest {
     }
 
     @Test
-    // Exercise 18
     void testValidateANumberIsAPerfectSquare() {
         Predicate<Integer> prefectSquare = (no) -> no == 1 || Math.sqrt(no) % 2 == 0 || Math.sqrt(no) % 3 == 0;
 
@@ -212,6 +209,113 @@ class ExercisesTest {
         assertFalse(prefectSquare.test(3));
         assertFalse(prefectSquare.test(6));
         assertFalse(prefectSquare.test(7));
+    }
+
+    @Test
+    void testFindSecondLargestAndSmallestElementInArray() {
+        BiFunction<List<Integer>, Boolean, Integer> findSecond = (ls, findMax) -> ls
+            .stream()
+            .distinct()
+            .sorted(findMax ? Comparator.reverseOrder() : Comparator.naturalOrder())
+            .skip(1)
+            .findFirst()
+            .orElse(null);
+
+        Assertions.assertEquals(9, findSecond.apply(List.of(1, 10, 2, 9, 7, 10, 9), true));
+        Assertions.assertEquals(2, findSecond.apply(List.of(1, 10, 2, 9, 7, 10, 1), false));
+    }
+
+    @Test
+    void testCalculateSumOfPrimeNumbersInRange() {
+        Function<Integer, Integer> sumOfPrime = (endExclusive) -> IntStream.range(0, endExclusive)
+            .filter(no -> {
+                if (no <= 1) {
+                    return false;
+                }
+                for (int i = 2; i <= Math.sqrt(no); i++) {
+                    if (no%i == 0) {
+                        return false;
+                    }
+                }
+                return true;
+            })
+            .reduce(0, Integer::sum);
+
+        Assertions.assertEquals(10, sumOfPrime.apply(6));
+    }
+
+    @Test
+    void testValidateListStringsWithTextTransform() {
+        BiPredicate<List<String>, String> check = (ls, type) -> !ls.isEmpty() && ls
+            .stream()
+            .allMatch(it -> {
+                if (Objects.equals(type, "lowercase")) {
+                    return Objects.equals(it, it.toLowerCase());
+                } else if (Objects.equals(type, "uppercase")) {
+                    return Objects.equals(it, it.toUpperCase());
+                } else {
+                    return true;
+                }
+            });
+
+        assertTrue(check.test(List.of("java", "python", "node"), "lowercase"));
+        assertTrue(check.test(List.of("JAVA", "PYTHON", "NODE"), "uppercase"));
+        assertTrue(check.test(List.of("java", "Python", "node"), "mix"));
+    }
+
+    @Test
+    void testCalculateAverageLengthOfListStrings() {
+        Function<List<String>, Double> averageOfLength = (ls) -> ls
+            .stream()
+            .mapToInt(String::length)
+            .average()
+            .orElse(0.0D);
+
+        Assertions.assertEquals(3.0D, averageOfLength.apply(List.of("hel", "llo", "sun")));
+        Assertions.assertEquals(0.0D, averageOfLength.apply(List.of()));
+    }
+
+    @Test
+    void testFindFactoryPrimeNumber() {
+        Function<Long, Long> factoryNumber = (no) -> {
+            List<Long> factors = LongStream
+                    .rangeClosed(2, (long) Math.sqrt(no))
+                    .boxed()
+                    .collect(Collectors.toList());
+            Collections.reverse(factors);
+
+            long firstFactor = factors
+                .stream()
+                .filter(factor -> no%factor == 0 && isPrime(factor))
+                .findFirst()
+                .orElse(no);
+            if (Objects.equals(firstFactor, no)) {
+                return no;
+            } else {
+                return (no/firstFactor)%2 != 0 ? (no/firstFactor) : firstFactor;
+            }
+        };
+
+        Assertions.assertEquals(11L, factoryNumber.apply(176L));
+        Assertions.assertEquals(3L, factoryNumber.apply(36L));
+        Assertions.assertEquals(29L, factoryNumber.apply(87L));
+        Assertions.assertEquals(29L, factoryNumber.apply(29L));
+    }
+
+    boolean isPrime(long number) {
+        return LongStream
+            .rangeClosed(2, (long) Math.sqrt(number))
+            .boxed()
+            .allMatch(i -> number%i != 0);
+    }
+
+    @Test
+    void testRepresentationIntegerAsBinary() {
+        Function<Integer, String> represent = Integer::toBinaryString;
+
+        Assertions.assertEquals("10", represent.apply(2));
+        Assertions.assertEquals("10010", represent.apply(18));
+        Assertions.assertEquals("10000000", represent.apply(128));
     }
 
 }
